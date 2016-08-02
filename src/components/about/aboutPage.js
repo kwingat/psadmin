@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 "use strict";
+=======
+'use strict';
+>>>>>>> origin/master
 
 var React = require('react');
 
 var About = React.createClass({
+<<<<<<< HEAD
     statics: {
         willTransitionTo: function (transition, params, query, callback) {
             if(!confirm('Are you sure?')){
@@ -19,6 +24,8 @@ var About = React.createClass({
         }
     },
 
+=======
+>>>>>>> origin/master
     render: function () {
         return (
             <div>
