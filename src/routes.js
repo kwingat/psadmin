@@ -15,6 +15,6 @@ var routes = (
         <NotFoundRoute handler={ require('./components/notFoundPage') }/>
         <Redirect from="about-us" to="about" />
     </Route>
-);
+); 
 
 module.exports = routes;
