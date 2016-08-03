@@ -26490,6 +26490,7 @@ return jQuery;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],5:[function(require,module,exports){
 // shim for using process in browser
+
 var process = module.exports = {};
 
 // cached from whatever global is present so that test runners that stub it
@@ -26501,35 +26502,21 @@ var cachedSetTimeout;
 var cachedClearTimeout;
 
 (function () {
-    try {
-        cachedSetTimeout = setTimeout;
-    } catch (e) {
-        cachedSetTimeout = function () {
-            throw new Error('setTimeout is not defined');
-        }
+  try {
+    cachedSetTimeout = setTimeout;
+  } catch (e) {
+    cachedSetTimeout = function () {
+      throw new Error('setTimeout is not defined');
     }
-    try {
-        cachedClearTimeout = clearTimeout;
-    } catch (e) {
-        cachedClearTimeout = function () {
-            throw new Error('clearTimeout is not defined');
-        }
+  }
+  try {
+    cachedClearTimeout = clearTimeout;
+  } catch (e) {
+    cachedClearTimeout = function () {
+      throw new Error('clearTimeout is not defined');
     }
+  }
 } ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        return setTimeout(fun, 0);
-    } else {
-        return cachedSetTimeout.call(null, fun, 0);
-    }
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        clearTimeout(marker);
-    } else {
-        cachedClearTimeout.call(null, marker);
-    }
-}
 var queue = [];
 var draining = false;
 var currentQueue;
@@ -26554,7 +26541,7 @@ function drainQueue() {
     if (draining) {
         return;
     }
-    var timeout = runTimeout(cleanUpNextTick);
+    var timeout = cachedSetTimeout.call(null, cleanUpNextTick);
     draining = true;
 
     var len = queue.length;
@@ -26571,7 +26558,7 @@ function drainQueue() {
     }
     currentQueue = null;
     draining = false;
-    runClearTimeout(timeout);
+    cachedClearTimeout.call(null, timeout);
 }
 
 process.nextTick = function (fun) {
@@ -26583,7 +26570,7 @@ process.nextTick = function (fun) {
     }
     queue.push(new Item(fun, args));
     if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
+        cachedSetTimeout.call(null, drainQueue, 0);
     }
 };
 
@@ -49494,7 +49481,36 @@ var App = React.createClass({displayName: "App",
 
 module.exports = App;
 
-},{"./common/header":207,"jquery":3,"react":200,"react-router":30}],205:[function(require,module,exports){
+},{"./common/header":209,"jquery":3,"react":200,"react-router":30}],205:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+var Input = require('../common/textInput');
+
+var AuthorForm = React.createClass({displayName: "AuthorForm",
+    render: function () {
+        return (
+            React.createElement("form", null, 
+                React.createElement("h1", null, "Manage Author"), 
+                React.createElement(Input, {name: "firstName", 
+                       label: "First Name", 
+                       onChange:  this.props.onChange, 
+                       value:  this.props.author.firstName}), 
+
+                React.createElement(Input, {name: "lastName", 
+                       label: "Last Name", 
+                       onChange:  this.props.onChange, 
+                       value:  this.props.author.lastName}), 
+
+                React.createElement("input", {type: "submit", value: "Save", className: "btn btn-default"})
+            )
+        );
+    }
+});
+
+module.exports = AuthorForm;
+
+},{"../common/textInput":210,"react":200}],206:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -49532,10 +49548,12 @@ var AuthorList = React.createClass({displayName: "AuthorList",
 
 module.exports = AuthorList;
 
-},{"react":200}],206:[function(require,module,exports){
+},{"react":200}],207:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
+var Router = require('react-router');
+var Link = require('react-router').Link;
 var AuthorApi = require('../../api/authorApi');
 var AuthorList = require('./authorList');
 
@@ -49557,6 +49575,7 @@ var AuthorPage = React.createClass({displayName: "AuthorPage",
         return (
           React.createElement("div", null, 
               React.createElement("h1", null, "Authors"), 
+              React.createElement(Link, {to: "addAuthor", className: "btn btn-default"}, "Add Author"), 
               React.createElement(AuthorList, {authors:  this.state.authors})
           )
         );
@@ -49565,7 +49584,47 @@ var AuthorPage = React.createClass({displayName: "AuthorPage",
 
 module.exports = AuthorPage;
 
-},{"../../api/authorApi":201,"./authorList":205,"react":200}],207:[function(require,module,exports){
+},{"../../api/authorApi":201,"./authorList":206,"react":200,"react-router":30}],208:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+var AuthorForm = require('./authorForm');
+var AuthorApi = require('../../api/authorApi');
+
+var ManageAuthorPage = React.createClass({displayName: "ManageAuthorPage",
+    getInitialState: function () {
+        return {
+            author: {id: '', firstName: '', lastName: ''}
+        };
+    },
+
+    setAuthorState: function (event) {
+        var field = event.target.name,
+            value = event.target.value;
+
+        this.state.author[field] = value;
+
+        return this.setState({author: this.state.author});
+    },
+
+    saveAuthor: function (event) {
+        event.preventDefault();
+
+    },
+
+    render: function () {
+        return (
+            React.createElement(AuthorForm, {
+                author:  this.state.author, 
+                onChange:  this.setAuthorState}
+            )
+        );
+    }
+});
+
+module.exports = ManageAuthorPage;
+
+},{"../../api/authorApi":201,"./authorForm":205,"react":200}],209:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -49593,7 +49652,50 @@ var Header = React.createClass({displayName: "Header",
 });
 
 module.exports = Header;
-},{"react":200,"react-router":30}],208:[function(require,module,exports){
+},{"react":200,"react-router":30}],210:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+
+var Input = React.createClass({displayName: "Input",
+    propTypes: {
+        name: React.PropTypes.string.isRequired,
+        label: React.PropTypes.string.isRequired,
+        onChange: React.PropTypes.func.isRequired,
+        placeholder: React.PropTypes.string,
+        value: React.PropTypes.string,
+        error: React.PropTypes.string
+    },
+
+    render: function () {
+        var wrapperClass = 'form-group';
+        if (this.props.error && this.props.error.length > 0) {
+            wrapperClass += " " + 'has-error';
+        }
+
+        return (
+            React.createElement("div", {className:  wrapperClass }, 
+                React.createElement("label", {htmlFor:  this.props.name},  this.props.label), 
+                React.createElement("div", {className: "field"}, 
+                    React.createElement("input", {
+                        type: "text", 
+                        name:  this.props.name, 
+                        className: "form-control", 
+                        placeholder:  this.props.placeholder, 
+                        ref:  this.props.name, 
+                        value:  this.props.value, 
+                        onChange:  this.props.onChange}
+                    ), 
+                    React.createElement("div", {className: "input"},  this.props.error)
+                )
+            )
+        );
+    }
+});
+
+module.exports = Input;
+
+},{"react":200}],211:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -49616,7 +49718,7 @@ var Home = React.createClass({displayName: "Home",
 
 module.exports = Home;
 
-},{"react":200,"react-router":30}],209:[function(require,module,exports){
+},{"react":200,"react-router":30}],212:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -49636,7 +49738,7 @@ var NotFoundPage = React.createClass({displayName: "NotFoundPage",
 
 module.exports = NotFoundPage;
 
-},{"react":200,"react-router":30}],210:[function(require,module,exports){
+},{"react":200,"react-router":30}],213:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -49650,6 +49752,7 @@ var routes = (
     React.createElement(Route, {name: "app", path: "/", handler:  require('./components/app') }, 
         React.createElement(DefaultRoute, {handler:  require('./components/homePage') }), 
         React.createElement(Route, {name: "authors", handler:  require('./components/authors/authorPage') }), 
+        React.createElement(Route, {name: "addAuthor", path: "author", handler:  require('./components/authors/manageAuthorPage') }), 
         React.createElement(Route, {name: "about", handler:  require('./components/about/aboutPage') }), 
         React.createElement(NotFoundRoute, {handler:  require('./components/notFoundPage') }), 
         React.createElement(Redirect, {from: "about-us", to: "about"})
@@ -49657,7 +49760,7 @@ var routes = (
 ); 
 
 module.exports = routes;
-},{"./components/about/aboutPage":203,"./components/app":204,"./components/authors/authorPage":206,"./components/homePage":208,"./components/notFoundPage":209,"react":200,"react-router":30}],211:[function(require,module,exports){
+},{"./components/about/aboutPage":203,"./components/app":204,"./components/authors/authorPage":207,"./components/authors/manageAuthorPage":208,"./components/homePage":211,"./components/notFoundPage":212,"react":200,"react-router":30}],214:[function(require,module,exports){
 "use strict";
 var React = require('react');
 var Router = require('react-router');
@@ -49666,4 +49769,4 @@ var routes = require('./routes');
 Router.run(routes, Router.HistoryLocation, function (Handler) {
     React.render(React.createElement(Handler, null), document.getElementById('app'));
 });
-},{"./routes":210,"react":200,"react-router":30}]},{},[211]);
+},{"./routes":213,"react":200,"react-router":30}]},{},[214]);
